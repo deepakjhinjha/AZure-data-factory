@@ -1,0 +1,94 @@
+{
+	"name": "dataflow1",
+	"properties": {
+		"type": "MappingDataFlow",
+		"typeProperties": {
+			"sources": [
+				{
+					"dataset": {
+						"referenceName": "Json1",
+						"type": "DatasetReference"
+					},
+					"name": "source1"
+				}
+			],
+			"sinks": [
+				{
+					"dataset": {
+						"referenceName": "DelimitedText2",
+						"type": "DatasetReference"
+					},
+					"name": "sink1"
+				}
+			],
+			"transformations": [
+				{
+					"name": "flatten1"
+				},
+				{
+					"name": "filter1"
+				},
+				{
+					"name": "Claims"
+				},
+				{
+					"name": "select1"
+				}
+			],
+			"scriptLines": [
+				"source(output(",
+				"          resourceType as string,",
+				"          type as string,",
+				"          entry as (fullUrl as string, resource as (resourceType as string, id as string, status as string, type as (coding as (system as string, code as string)[]), use as string, patient as (reference as string), billablePeriod as (start as string, end as string), created as string, provider as (reference as string, display as string), priority as (coding as (system as string, code as string)[]), prescription as (reference as string), insurance as (sequence as integer, focal as boolean, coverage as (display as string))[], item as (sequence as integer, productOrService as (coding as (system as string, code as string, display as string)[], text as string), encounter as (reference as string)[])[], total as (value as double, currency as string)))[]",
+				"     ),",
+				"     allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     inferDriftedColumnTypes: true,",
+				"     ignoreNoFilesFound: false,",
+				"     documentForm: 'singleDocument') ~> source1",
+				"source1 foldDown(unroll(entry),",
+				"     mapColumn(",
+				"          resourceType,",
+				"          type,",
+				"          entry",
+				"     ),",
+				"     skipDuplicateMapInputs: false,",
+				"     skipDuplicateMapOutputs: false) ~> flatten1",
+				"flatten1 filter(entry.resource.resourceType == 'Claim') ~> filter1",
+				"filter1 derive(claim_id = entry.resource.id,",
+				"          status = entry.resource.status,",
+				"          claim_type = entry.resource.{type}.coding[1].code,",
+				"          patient_ref = replace(entry.resource.patient.reference, 'urn:uuid:', ''),",
+				"          billable_start = entry.resource.billablePeriod.start,",
+				"          billable_end = entry.resource.billablePeriod.end,",
+				"          provider_name = entry.resource.provider.display,",
+				"          insurance_coverage = entry.resource.insurance[1].coverage.display,",
+				"          procedure_code = entry.resource.item[1].productOrService.coding[1].code,",
+				"          procedure_desc = entry.resource.item[1].productOrService.text,",
+				"          total_amount = entry.resource.{total}.value,",
+				"          currency = entry.resource.{total}.currency) ~> Claims",
+				"Claims select(mapColumn(",
+				"          claim_id,",
+				"          status,",
+				"          claim_type,",
+				"          patient_ref,",
+				"          billable_start,",
+				"          billable_end,",
+				"          provider_name,",
+				"          insurance_coverage,",
+				"          procedure_code,",
+				"          procedure_desc,",
+				"          total_amount,",
+				"          currency",
+				"     ),",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true) ~> select1",
+				"select1 sink(allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     truncate: true,",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true) ~> sink1"
+			]
+		}
+	}
+}

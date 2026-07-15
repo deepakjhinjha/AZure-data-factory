@@ -1,0 +1,92 @@
+{
+	"name": "Filter_Patient",
+	"properties": {
+		"type": "MappingDataFlow",
+		"typeProperties": {
+			"sources": [
+				{
+					"dataset": {
+						"referenceName": "Json1",
+						"type": "DatasetReference"
+					},
+					"name": "source1"
+				}
+			],
+			"sinks": [
+				{
+					"dataset": {
+						"referenceName": "DelimitedText1",
+						"type": "DatasetReference"
+					},
+					"name": "sink1"
+				}
+			],
+			"transformations": [
+				{
+					"name": "flatten1"
+				},
+				{
+					"name": "filter1"
+				},
+				{
+					"name": "Patient"
+				},
+				{
+					"name": "select1"
+				}
+			],
+			"scriptLines": [
+				"source(output(",
+				"          resourceType as string,",
+				"          type as string,",
+				"          entry as (fullUrl as string, resource as (resourceType as string, id as string, meta as (profile as string[]), text as (status as string, div as string), extension as (url as string, extension as (url as string, valueCoding as (system as string, code as string, display as string))[])[], identifier as (system as string, value as string)[], name as (use as string, family as string, given as string[], prefix as string[])[], telecom as (system as string, value as string, use as string)[], gender as string, birthDate as string, address as (extension as (url as string, extension as (url as string, valueDecimal as double)[])[], line as string[], city as string, state as string, postalCode as string, country as string)[], maritalStatus as (coding as (system as string, code as string, display as string)[], text as string), multipleBirthBoolean as boolean, communication as (language as (coding as (system as string, code as string, display as string)[], text as string))[]), request as (method as string, url as string))[]",
+				"     ),",
+				"     allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     inferDriftedColumnTypes: true,",
+				"     ignoreNoFilesFound: false,",
+				"     documentForm: 'singleDocument') ~> source1",
+				"source1 foldDown(unroll(entry),",
+				"     mapColumn(",
+				"          resourceType,",
+				"          type,",
+				"          entry",
+				"     ),",
+				"     skipDuplicateMapInputs: false,",
+				"     skipDuplicateMapOutputs: false) ~> flatten1",
+				"flatten1 filter(entry.resource.resourceType == 'Patient') ~> filter1",
+				"filter1 derive(patient_id = entry.resource.id,",
+				"          gender = entry.resource.gender,",
+				"          birth_date = entry.resource.birthDate,",
+				"          first_name = entry.resource.name[1].given[1],",
+				"          last_name = entry.resource.name[1].family,",
+				"          phone = filter(entry.resource.telecom, #item.system=='phone')[1].value,",
+				"          city = entry.resource.address[1].city,",
+				"          state = entry.resource.address[1].state,",
+				"          postal_code = entry.resource.address[1].postalCode,",
+				"          country = entry.resource.address[1].country,",
+				"          marital_status = entry.resource.maritalStatus.text) ~> Patient",
+				"Patient select(mapColumn(",
+				"          patient_id,",
+				"          gender,",
+				"          birth_date,",
+				"          first_name,",
+				"          last_name,",
+				"          phone,",
+				"          city,",
+				"          state,",
+				"          postal_code,",
+				"          country,",
+				"          marital_status",
+				"     ),",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true) ~> select1",
+				"select1 sink(allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     truncate: true,",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true) ~> sink1"
+			]
+		}
+	}
+}
