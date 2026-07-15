@@ -1,0 +1,33 @@
+{
+	"$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentParameters.json#",
+	"contentVersion": "1.0.0.0",
+	"parameters": {
+		"factoryName": {
+			"value": "deeps-adfs"
+		},
+		"AzureBlobStorage1_connectionString": {
+			"value": ""
+		},
+		"AzureDataLakeStorage1_accountKey": {
+			"value": ""
+		},
+		"AzureDataLakeStorage1_properties_typeProperties_url": {
+			"value": "https://deeepstorage123.dfs.core.windows.net/"
+		},
+		"NewJSONFileTrigger_properties_typeProperties_scope": {
+			"value": "/subscriptions/776ac899-1c2f-4c92-9436-55d8272ecf71/resourceGroups/deeps/providers/Microsoft.Storage/storageAccounts/deeepstorage123"
+		},
+		"trigger1_properties_typeProperties_scope": {
+			"value": "/subscriptions/776ac899-1c2f-4c92-9436-55d8272ecf71/resourceGroups/deeps/providers/Microsoft.Storage/storageAccounts/deeepstorage123"
+		},
+		"trigger2_properties_typeProperties_scope": {
+			"value": "/subscriptions/776ac899-1c2f-4c92-9436-55d8272ecf71/resourceGroups/deeps/providers/Microsoft.Storage/storageAccounts/deeepstorage123"
+		},
+		"containerUri": {
+			"value": ""
+		},
+		"containerSasToken": {
+			"value": ""
+		}
+	}
+}
